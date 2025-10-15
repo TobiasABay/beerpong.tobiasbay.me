@@ -119,25 +119,8 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
     };
 
     const calculateMatchTopMargin = (round: number, matchIndex: number, totalMatches: number) => {
-        if (round === 1) return '0px';
-
-        // For Round 2, position each match beneath its first corresponding Round 1 match
-        if (round === 2) {
-            // Each Round 2 match corresponds to 2 Round 1 matches
-            // Position it beneath the first match of the pair
-            const targetPosition = matchIndex * 2 * 136; // 120px match height + 16px gap
-            return `${targetPosition}px`;
-        }
-
-        // For subsequent rounds, center matches based on their position
-        const previousRoundMatches = getMatchesByRound(round - 1);
-
-        // Calculate the position this match should be centered at
-        const targetPosition = (matchIndex * 2) * 136; // Position of first match this round should connect to
-        const matchHeight = 120; // Height of this match
-        const targetCenter = targetPosition + (matchHeight / 2);
-
-        return `${Math.max(0, targetCenter - (matchHeight / 2))}px`;
+        // All matches start at the top of their round column
+        return '0px';
     };
 
     if (players.length === 0) {
