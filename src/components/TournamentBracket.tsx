@@ -118,6 +118,21 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
         return Math.ceil(Math.log2(players.length));
     };
 
+    const calculateMatchTopMargin = (round: number, matchIndex: number, totalMatches: number) => {
+        if (round === 1) return '0px';
+
+        // For subsequent rounds, center matches based on their position
+        const previousRoundMatches = getMatchesByRound(round - 1);
+        const previousRoundHeight = (previousRoundMatches.length * 120) + ((previousRoundMatches.length - 1) * 16); // 120px per match + 16px gap
+
+        // Calculate the position this match should be centered at
+        const targetPosition = (matchIndex * 2) * 120 + (matchIndex * 2) * 16; // Position of first match this round should connect to
+        const matchHeight = 120; // Height of this match
+        const targetCenter = targetPosition + (matchHeight / 2);
+
+        return `${Math.max(0, targetCenter - (matchHeight / 2))}px`;
+    };
+
     if (players.length === 0) {
         return (
             <Box sx={{
@@ -168,7 +183,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                             minWidth: '200px',
                             alignItems: 'center',
                             position: 'relative',
-                            justifyContent: round === 1 ? 'flex-start' : 'center'
+                            justifyContent: 'flex-start'
                         }}>
                             <Typography variant="subtitle1" sx={{
                                 fontWeight: 'bold',
@@ -188,8 +203,8 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                     gap: 1,
                                     alignItems: 'center',
                                     position: 'relative',
-                                    // Center the Round 2 match between the two Round 1 matches
-                                    marginTop: round === 2 && roundMatches.length === 1 ? '40px' : '0px'
+                                    // Calculate proper positioning for each round
+                                    marginTop: calculateMatchTopMargin(round, matchIndex, roundMatches.length)
                                 }}>
                                     {/* Connection lines from previous round */}
                                     {round > 1 && (
@@ -244,9 +259,9 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                                 isLoser={match.winner === match.player2}
                                                 onClick={() => handleMatchResult(match.id, match.player1)}
                                             />
-                                            
+
                                             <Typography variant="caption" sx={{ color: '#666', textAlign: 'center' }}>VS</Typography>
-                                            
+
                                             <PlayerBox
                                                 name={match.player2}
                                                 isWinner={match.winner === match.player2}
@@ -256,66 +271,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                         </Box>
                                     </Box>
 
-                                    {/* Connection lines to next round */}
-                                    {round < totalRounds && (
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            right: '-100px',
-                                            top: '50%',
-                                            width: '100px',
-                                            height: '2px',
-                                            backgroundColor: '#ddd',
-                                            zIndex: 1,
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                right: '-6px',
-                                                top: '-2px',
-                                                width: '0',
-                                                height: '0',
-                                                borderLeft: '4px solid #ddd',
-                                                borderTop: '2px solid transparent',
-                                                borderBottom: '2px solid transparent'
-                                            }
-                                        }} />
-                                    )}
 
-                                    {/* Vertical merge lines for pairs of matches */}
-                                    {roundMatches.length > 1 && matchIndex % 2 === 1 && (
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            right: '-50px',
-                                            top: '-40px',
-                                            width: '2px',
-                                            height: '80px',
-                                            backgroundColor: '#ddd',
-                                            zIndex: 1
-                                        }} />
-                                    )}
-
-                                    {/* Horizontal merge line from vertical to next round */}
-                                    {roundMatches.length > 1 && matchIndex % 2 === 1 && (
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            right: '-50px',
-                                            top: '50%',
-                                            width: '50px',
-                                            height: '2px',
-                                            backgroundColor: '#ddd',
-                                            zIndex: 1,
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                right: '-6px',
-                                                top: '-2px',
-                                                width: '0',
-                                                height: '0',
-                                                borderLeft: '4px solid #ddd',
-                                                borderTop: '2px solid transparent',
-                                                borderBottom: '2px solid transparent'
-                                            }
-                                        }} />
-                                    )}
                                 </Box>
                             ))}
                         </Box>
