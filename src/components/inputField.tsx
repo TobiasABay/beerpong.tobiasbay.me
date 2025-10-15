@@ -88,8 +88,15 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             players = splitTeamsIntoPlayers(players);
         }
 
-        // Shuffle teams and names within teams
-        const shuffled = shuffleTeamsAndNames([...players]);
+        // Shuffle based on team mode
+        let shuffled: string[];
+        if (teamMode) {
+            // If team mode is enabled, break up existing teams and create new random pairings
+            shuffled = shuffleAndRepairTeams([...players]);
+        } else {
+            // If team mode is disabled, just shuffle the sequence
+            shuffled = shuffleTeamsAndNames([...players]);
+        }
 
         const shuffledText = shuffled.join('\n');
         handleInputChange(shuffledText);
@@ -134,6 +141,31 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             }
             return item;
         });
+    };
+
+    const shuffleAndRepairTeams = (players: string[]): string[] => {
+        // Extract all individual names from teams
+        const allNames: string[] = [];
+        players.forEach(player => {
+            if (player.includes('/')) {
+                // Split team into individual names
+                const names = player.split('/').map(name => name.trim());
+                allNames.push(...names);
+            } else {
+                // Already an individual player
+                allNames.push(player);
+            }
+        });
+
+        // Shuffle all individual names
+        const shuffledNames = [...allNames];
+        for (let i = shuffledNames.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
+        }
+
+        // Create new random teams from shuffled individual names
+        return createTeamsFromPlayers(shuffledNames);
     };
 
     return (
