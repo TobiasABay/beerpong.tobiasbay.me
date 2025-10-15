@@ -22,7 +22,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
     };
 
     return (
-        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 2, padding: 2 }}>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography variant="h6">Insert Players</Typography>
             <TextField
                 value={inputText}
