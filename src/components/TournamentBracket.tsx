@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import PlayerBox from './PlayerBox';
 
 interface Match {
@@ -17,7 +17,6 @@ interface TournamentBracketProps {
 
 export default function TournamentBracket({ players }: TournamentBracketProps) {
     const [matches, setMatches] = useState<Match[]>([]);
-    const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
     // Initialize bracket when players change
     useEffect(() => {
         if (players.length === 0) {
@@ -118,10 +117,6 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
         return Math.ceil(Math.log2(players.length));
     };
 
-    const calculateMatchTopMargin = (round: number, matchIndex: number, totalMatches: number) => {
-        // All matches start at the top of their round column
-        return '0px';
-    };
 
     if (players.length === 0) {
         return (
@@ -186,7 +181,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                             `Round ${round}`}
                             </Typography>
 
-                            {roundMatches.map((match, matchIndex) => (
+                            {roundMatches.map((match) => (
                                 <Box key={match.id} sx={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -194,30 +189,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                     alignItems: 'center',
                                     position: 'relative',
                                     // Calculate proper positioning for each round
-                                    marginTop: calculateMatchTopMargin(round, matchIndex, roundMatches.length)
                                 }}>
-                                    {/* Connection lines from previous round */}
-                                    {round > 1 && (
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            left: '-100px',
-                                            top: '50%',
-                                            width: '100px',
-                                            height: '2px',
-                                            backgroundColor: '#ddd',
-                                            zIndex: 1,
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                right: '-2px',
-                                                top: '-3px',
-                                                width: '8px',
-                                                height: '8px',
-                                                backgroundColor: '#ddd',
-                                                transform: 'rotate(45deg)'
-                                            }
-                                        }} />
-                                    )}
 
                                     {/* Match Box */}
                                     <Box sx={{
