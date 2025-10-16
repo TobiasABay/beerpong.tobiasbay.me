@@ -178,7 +178,8 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             backgroundColor: 'hsl(0, 0%, 15%)',
             p: 3,
             borderRadius: 2,
-            border: '1px solid hsl(0, 0%, 25%)'
+            border: '1px solid hsl(0, 0%, 25%)',
+            boxSizing: 'border-box'
         }}>
             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: "space-between", alignItems: "center", gap: 2 }}>
 

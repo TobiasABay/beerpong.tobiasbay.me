@@ -100,13 +100,13 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
 
     return (
         <Box ref={containerRef} sx={{
-            p: 4,
+            p: 2,
             position: 'relative',
-            backgroundColor: 'hsl(0, 0%, 10%)',
-            minHeight: '100vh',
+            backgroundColor: 'hsl(0, 0%, 15%)',
+            height: '100%',
             overflow: 'auto'
         }}>
-            <Typography variant="h3" sx={{
+            <Typography variant="h4" sx={{
                 textAlign: 'center',
                 mb: 4,
                 color: 'white',
