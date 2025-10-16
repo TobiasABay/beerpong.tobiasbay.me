@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import PlayerBox from './PlayerBox';
 
@@ -17,229 +17,182 @@ interface TournamentBracketProps {
 
 export default function TournamentBracket({ players }: TournamentBracketProps) {
     const [matches, setMatches] = useState<Match[]>([]);
-    // Initialize bracket when players change
+    const [svgKey, setSvgKey] = useState(0);
+    const containerRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (players.length === 0) {
             setMatches([]);
             return;
         }
 
-        // Create initial round matches
-        const initialMatches: Match[] = [];
+        const initial: Match[] = [];
         for (let i = 0; i < players.length; i += 2) {
             if (i + 1 < players.length) {
-                initialMatches.push({
+                initial.push({
                     id: `round-1-match-${Math.floor(i / 2) + 1}`,
                     player1: players[i],
                     player2: players[i + 1],
                     round: 1,
-                    position: Math.floor(i / 2) + 1
+                    position: Math.floor(i / 2) + 1,
                 });
             } else {
-                // Odd number of players - give last player a bye
-                initialMatches.push({
+                initial.push({
                     id: `round-1-match-${Math.floor(i / 2) + 1}`,
                     player1: players[i],
                     player2: 'BYE',
                     winner: players[i],
                     round: 1,
-                    position: Math.floor(i / 2) + 1
+                    position: Math.floor(i / 2) + 1,
                 });
             }
         }
-        setMatches(initialMatches);
+        setMatches(initial);
     }, [players]);
 
-    const handleMatchResult = (matchId: string, winner: string) => {
-        const updatedMatches = matches.map(match =>
-            match.id === matchId ? { ...match, winner } : match
-        );
-        setMatches(updatedMatches);
+    const handleMatchResult = (id: string, winner: string) => {
+        const updated = matches.map(m => (m.id === id ? { ...m, winner } : m));
+        setMatches(updated);
+        const match = updated.find(m => m.id === id);
+        if (match) createNextRound(match, winner, updated);
 
-        // Auto-advance winners to next round
-        const match = updatedMatches.find(m => m.id === matchId);
-        if (match) {
-            createNextRoundMatch(match, winner, updatedMatches);
-        }
+        // Force SVG re-render after DOM updates
+        setTimeout(() => setSvgKey(prev => prev + 1), 10);
     };
 
-    const createNextRoundMatch = (currentMatch: Match, winner: string, currentMatches: Match[]) => {
-        const nextRound = currentMatch.round + 1;
-        const nextPosition = Math.ceil(currentMatch.position / 2);
+    const createNextRound = (current: Match, winner: string, all: Match[]) => {
+        const nextRound = current.round + 1;
+        const nextPos = Math.ceil(current.position / 2);
+        const siblingPos = current.position % 2 === 1 ? current.position + 1 : current.position - 1;
+        const sibling = all.find(m => m.round === current.round && m.position === siblingPos);
+        const existing = all.find(m => m.round === nextRound && m.position === nextPos);
 
-        // Find the sibling match that pairs with this one
-        const siblingPosition = currentMatch.position % 2 === 1 ?
-            currentMatch.position + 1 :
-            currentMatch.position - 1;
-
-        const siblingMatch = currentMatches.find(m =>
-            m.round === currentMatch.round && m.position === siblingPosition
-        );
-
-        // Check if next round match already exists
-        const existingMatch = currentMatches.find(m =>
-            m.round === nextRound && m.position === nextPosition
-        );
-
-        if (siblingMatch && siblingMatch.winner) {
-            // Both matches are complete, create or update next round match
-            if (!existingMatch) {
-                // Create new next round match
-                const newMatch: Match = {
-                    id: `round-${nextRound}-match-${nextPosition}`,
-                    player1: currentMatch.position % 2 === 1 ? winner : siblingMatch.winner,
-                    player2: currentMatch.position % 2 === 1 ? siblingMatch.winner : winner,
-                    round: nextRound,
-                    position: nextPosition
-                };
-                setMatches([...currentMatches, newMatch]);
+        if (sibling && sibling.winner) {
+            if (!existing) {
+                setMatches([
+                    ...all,
+                    {
+                        id: `round-${nextRound}-match-${nextPos}`,
+                        player1: current.position % 2 === 1 ? winner : sibling.winner,
+                        player2: current.position % 2 === 1 ? sibling.winner : winner,
+                        round: nextRound,
+                        position: nextPos,
+                    },
+                ]);
             } else {
                 // Update existing next round match
-                const isFirstPlayer = currentMatch.position % 2 === 1;
+                const isFirstPlayer = current.position % 2 === 1;
                 const updatedNextMatch = {
-                    ...existingMatch,
-                    player1: isFirstPlayer ? winner : existingMatch.player1,
-                    player2: isFirstPlayer ? existingMatch.player2 : winner
+                    ...existing,
+                    player1: isFirstPlayer ? winner : existing.player1,
+                    player2: isFirstPlayer ? existing.player2 : winner
                 };
-                setMatches(currentMatches.map(m =>
-                    m.id === existingMatch.id ? updatedNextMatch : m
+                setMatches(all.map(m =>
+                    m.id === existing.id ? updatedNextMatch : m
                 ));
             }
         }
     };
 
-    const getMatchesByRound = (round: number) => {
-        return matches.filter(match => match.round === round);
-    };
+    const totalRounds = Math.ceil(Math.log2(players.length || 1));
+    const getMatchesByRound = (round: number) => matches.filter(m => m.round === round);
 
-    const getTotalRounds = () => {
-        if (players.length === 0) return 0;
-        return Math.ceil(Math.log2(players.length));
-    };
-
-
-    if (players.length === 0) {
-        return (
-            <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: '#666'
-            }}>
-                <Typography variant="h6">
-                    Enter players and click "Create Bracket" to start
-                </Typography>
-            </Box>
-        );
-    }
-
-    const totalRounds = getTotalRounds();
 
     return (
-        <Box sx={{
-            width: '100%',
-            height: '100%',
-            padding: 2,
-            overflow: 'auto',
-            backgroundColor: '#f5f5f5'
-        }}>
-            <Typography variant="h5" sx={{ mb: 3, color: '#333', textAlign: 'center' }}>
-                Tournament Bracket
-            </Typography>
+        <Box ref={containerRef} sx={{ p: 1, position: 'relative', backgroundColor: '#f7f7f7' }}>
 
-            {/* Bracket Layout */}
-            <Box sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                minHeight: '400px',
-                position: 'relative'
-            }}>
-                {Array.from({ length: totalRounds }, (_, roundIndex) => {
-                    const round = roundIndex + 1;
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 4 }}>
+                {Array.from({ length: totalRounds }, (_, r) => {
+                    const round = r + 1;
                     const roundMatches = getMatchesByRound(round);
 
                     return (
-                        <Box key={round} sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 2,
-                            minWidth: '200px',
-                            alignItems: 'center',
-                            position: 'relative',
-                            justifyContent: 'flex-start'
-                        }}>
-                            <Typography variant="subtitle1" sx={{
-                                fontWeight: 'bold',
-                                color: '#333',
-                                mb: 1
-                            }}>
-                                {round === totalRounds ? 'Final' :
-                                    round === totalRounds - 1 ? 'Semi-Finals' :
-                                        round === totalRounds - 2 ? 'Quarter-Finals' :
-                                            `Round ${round}`}
-                            </Typography>
-
-                            {roundMatches.map((match) => (
-                                <Box key={match.id} sx={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 1,
-                                    alignItems: 'center',
-                                    position: 'relative',
-                                    // Calculate proper positioning for each round
-                                }}>
-
-                                    {/* Match Box */}
-                                    <Box sx={{
+                        <Box
+                            key={round}
+                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+                        >
+                            {roundMatches.map(match => (
+                                <Box
+                                    key={match.id}
+                                    id={match.id}
+                                    sx={{
                                         backgroundColor: 'white',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        padding: '8px 12px',
-                                        minWidth: '150px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: 2,
+                                        p: 2,
+                                        minWidth: 200,
                                         textAlign: 'center',
                                         position: 'relative',
-                                        zIndex: 2
-                                    }}>
-                                        {/* Small square indicator */}
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            left: '-6px',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            width: '12px',
-                                            height: '12px',
-                                            backgroundColor: '#666',
-                                            borderRadius: '2px'
-                                        }} />
-
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                            <PlayerBox
-                                                name={match.player1}
-                                                isWinner={match.winner === match.player1}
-                                                isLoser={match.winner === match.player2}
-                                                onClick={() => handleMatchResult(match.id, match.player1)}
-                                            />
-
-                                            <Typography variant="caption" sx={{ color: '#666', textAlign: 'center' }}>VS</Typography>
-
-                                            <PlayerBox
-                                                name={match.player2}
-                                                isWinner={match.winner === match.player2}
-                                                isLoser={match.winner === match.player1}
-                                                onClick={() => handleMatchResult(match.id, match.player2)}
-                                            />
-                                        </Box>
-                                    </Box>
-
-
+                                    }}
+                                >
+                                    <PlayerBox
+                                        name={match.player1}
+                                        isWinner={match.winner === match.player1}
+                                        isLoser={match.winner === match.player2}
+                                        onClick={() => handleMatchResult(match.id, match.player1)}
+                                    />
+                                    <Typography variant="caption">VS</Typography>
+                                    <PlayerBox
+                                        name={match.player2}
+                                        isWinner={match.winner === match.player2}
+                                        isLoser={match.winner === match.player1}
+                                        onClick={() => handleMatchResult(match.id, match.player2)}
+                                    />
                                 </Box>
                             ))}
                         </Box>
                     );
                 })}
             </Box>
+
+            {/* SVG Overlay for connections */}
+            <svg
+                key={svgKey}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                }}
+            >
+                {matches.map(m => {
+                    // Only draw connections from matches that have winners
+                    if (!m.winner) return null;
+
+                    const nextRound = m.round + 1;
+                    const nextPos = Math.ceil(m.position / 2);
+                    const nextMatch = matches.find(
+                        x => x.round === nextRound && x.position === nextPos
+                    );
+                    if (!nextMatch) return null;
+
+                    const fromBox = document.getElementById(m.id);
+                    const toBox = document.getElementById(nextMatch.id);
+                    if (!fromBox || !toBox) return null;
+
+                    const fromRect = fromBox.getBoundingClientRect();
+                    const toRect = toBox.getBoundingClientRect();
+                    const containerRect = containerRef.current?.getBoundingClientRect();
+                    if (!containerRect) return null;
+
+                    const x1 = fromRect.right - containerRect.left;
+                    const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
+                    const x2 = toRect.left - containerRect.left;
+                    const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+
+                    return (
+                        <path
+                            key={`${m.id}-to-${nextMatch.id}`}
+                            d={`M${x1},${y1} C${x1 + 40},${y1} ${x2 - 40},${y2} ${x2},${y2}`}
+                            stroke="#444"
+                            strokeWidth="2"
+                            fill="none"
+                        />
+                    );
+                })}
+            </svg>
         </Box>
     );
 }
