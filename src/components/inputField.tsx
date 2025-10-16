@@ -169,37 +169,61 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
     };
 
     return (
-        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography variant="h6">Insert Players</Typography>
+        <Box sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            backgroundColor: 'hsl(0, 0%, 15%)',
+            p: 3,
+            borderRadius: 2,
+            border: '1px solid hsl(0, 0%, 25%)'
+        }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: "space-between", alignItems: "center", gap: 2 }}>
 
-            <FormControlLabel
-                control={
-                    <Switch
-                        checked={teamMode}
-                        onChange={handleTeamModeChange}
-                        color="primary"
-                    />
-                }
-                label="Team Mode"
-                sx={{ alignSelf: 'flex-start' }}
-            />
+                <Typography variant="h6" sx={{ color: 'white' }}>Insert Players</Typography>
+
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={teamMode}
+                            onChange={handleTeamModeChange}
+                            color="primary"
+                        />
+                    }
+                    label="Team Mode"
+                    sx={{ alignSelf: 'flex-start', color: 'white' }}
+                />
+            </Box>
 
             <TextField
                 value={inputText}
                 onChange={(e) => handleInputChange(e.target.value)}
                 sx={{
-                    backgroundColor: 'white',
+                    backgroundColor: "hsl(0, 0%, 10%)",
                     width: '100%',
                     flex: 1,
                     '& .MuiInputBase-root': {
                         height: '100%',
-                        alignItems: 'flex-start'
+                        alignItems: 'flex-start',
+                        color: 'white'
                     },
                     '& .MuiInputBase-input': {
                         height: '100%',
                         alignItems: 'flex-start',
                         paddingTop: '14px',
-                        overflow: 'auto'
+                        overflow: 'auto',
+                        color: 'white'
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'hsl(0, 0%, 25%)'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'hsl(0, 0%, 35%)'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'hsl(0, 0%, 50%)'
                     }
                 }}
                 multiline
