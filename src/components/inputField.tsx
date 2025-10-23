@@ -4,7 +4,6 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 
 interface InputFieldProps {
@@ -19,6 +18,10 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
     const [teamMode, setTeamMode] = useState(() => {
         // Load team mode preference from localStorage
         return localStorage.getItem('tournament-team-mode') === 'true';
+    });
+    const [lockTeams, setLockTeams] = useState(() => {
+        // Load lock teams preference from localStorage
+        return localStorage.getItem('tournament-lock-teams') === 'true';
     });
 
     const shortenLongNames = (text: string, maxLength: number = 30): string => {
@@ -57,6 +60,12 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
         const newTeamMode = event.target.checked;
         setTeamMode(newTeamMode);
         localStorage.setItem('tournament-team-mode', newTeamMode.toString());
+    };
+
+    const handleLockTeamsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newLockTeams = event.target.checked;
+        setLockTeams(newLockTeams);
+        localStorage.setItem('tournament-lock-teams', newLockTeams.toString());
     };
 
     const handleSubmit = () => {
@@ -114,10 +123,13 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             players = splitTeamsIntoPlayers(players);
         }
 
-        // Shuffle based on team mode
+        // Shuffle based on team mode and lock teams setting
         let shuffled: string[];
-        if (teamMode) {
-            // If team mode is enabled, break up existing teams and create new random pairings
+        if (teamMode && lockTeams) {
+            // If team mode is enabled and teams are locked, only shuffle the order of teams
+            shuffled = shuffleTeamsAndNames([...players]);
+        } else if (teamMode) {
+            // If team mode is enabled but teams are not locked, break up existing teams and create new random pairings
             shuffled = shuffleAndRepairTeams([...players]);
         } else {
             // If team mode is disabled, just shuffle the sequence
@@ -207,21 +219,27 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             border: '1px solid hsl(0, 0%, 25%)',
             boxSizing: 'border-box'
         }}>
-            <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+            <Typography variant="h6" sx={{ color: 'white' }}>Insert Players</Typography>
 
-                <Typography variant="h6" sx={{ color: 'white' }}>Insert Players</Typography>
-
-                <FormControlLabel
-                    control={
+            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, justifyContent: 'center' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body1" sx={{ color: 'white' }}>Team Mode</Typography>
+                    <Switch
+                        checked={teamMode}
+                        onChange={handleTeamModeChange}
+                        color="primary"
+                    />
+                </Box>
+                {teamMode && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body1" sx={{ color: 'white' }}>Lock Teams</Typography>
                         <Switch
-                            checked={teamMode}
-                            onChange={handleTeamModeChange}
-                            color="primary"
+                            checked={lockTeams}
+                            onChange={handleLockTeamsChange}
+                            color="secondary"
                         />
-                    }
-                    label="Team Mode"
-                    sx={{ alignSelf: 'flex-start', color: 'white' }}
-                />
+                    </Box>
+                )}
             </Box>
 
             <TextField
