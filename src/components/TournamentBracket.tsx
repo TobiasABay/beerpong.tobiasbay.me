@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Modal, Fade } from '@mui/material';
+import { Box, Typography, Modal, Fade, IconButton } from '@mui/material';
+import { Shuffle as ShuffleIcon } from '@mui/icons-material';
 import PlayerBox from './PlayerBox';
 import Confetti from 'react-confetti';
 
@@ -131,6 +132,61 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
         }
     };
 
+    const shuffleRound = (round: number) => {
+        const roundMatches = matches.filter(m => m.round === round);
+
+        if (roundMatches.length === 0) return;
+
+        // Get all players from this round (both winners and losers)
+        const allPlayers: string[] = [];
+        roundMatches.forEach(match => {
+            if (match.player1 !== 'BYE') allPlayers.push(match.player1);
+            if (match.player2 !== 'BYE') allPlayers.push(match.player2);
+        });
+
+        // Shuffle the players
+        const shuffledPlayers = [...allPlayers];
+        for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+        }
+
+        // Create new matches with shuffled players
+        const newMatches = [];
+        for (let i = 0; i < shuffledPlayers.length; i += 2) {
+            if (i + 1 < shuffledPlayers.length) {
+                newMatches.push({
+                    id: `round-${round}-match-${Math.floor(i / 2) + 1}`,
+                    player1: shuffledPlayers[i],
+                    player2: shuffledPlayers[i + 1],
+                    round: round,
+                    position: Math.floor(i / 2) + 1,
+                });
+            } else {
+                // Odd player gets a BYE
+                newMatches.push({
+                    id: `round-${round}-match-${Math.floor(i / 2) + 1}`,
+                    player1: shuffledPlayers[i],
+                    player2: 'BYE',
+                    winner: shuffledPlayers[i], // Auto-advance
+                    round: round,
+                    position: Math.floor(i / 2) + 1,
+                });
+            }
+        }
+
+        // Update matches for this round
+        const updatedMatches = matches.map(match => {
+            if (match.round === round) {
+                const newMatch = newMatches.find(nm => nm.position === match.position);
+                return newMatch || match;
+            }
+            return match;
+        });
+
+        setMatches(updatedMatches);
+    };
+
     const totalRounds = Math.ceil(Math.log2(players.length || 1));
     const getMatchesByRound = (round: number) => matches.filter(m => m.round === round);
 
@@ -252,22 +308,51 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                                     position: 'relative'
                                 }}
                             >
-                                <Typography variant="h6" sx={{
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    textAlign: 'center',
-                                    mb: 2,
-                                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-                                    backgroundColor: 'hsl(0, 0%, 15%)',
-                                    padding: '8px 16px',
-                                    borderRadius: '20px',
-                                    border: '1px solid hsl(0, 0%, 25%)'
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 2,
+                                    mb: 2
                                 }}>
-                                    {round === totalRounds ? '🏆 Final' :
-                                        round === totalRounds - 1 ? '🥈 Semi-Finals' :
-                                            round === totalRounds - 2 ? '🥉 Quarter-Finals' :
-                                                `Round ${round}`}
-                                </Typography>
+                                    <Typography variant="h6" sx={{
+                                        color: 'white',
+                                        fontWeight: 'bold',
+                                        textAlign: 'center',
+                                        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                                        backgroundColor: 'hsl(0, 0%, 15%)',
+                                        padding: '8px 16px',
+                                        borderRadius: '20px',
+                                        border: '1px solid hsl(0, 0%, 25%)'
+                                    }}>
+                                        {round === totalRounds ? '🏆 Final' :
+                                            round === totalRounds - 1 ? '🥈 Semi-Finals' :
+                                                round === totalRounds - 2 ? '🥉 Quarter-Finals' :
+                                                    `Round ${round}`}
+                                    </Typography>
+                                    {roundMatches.length > 0 && (
+                                        <IconButton
+                                            onClick={() => shuffleRound(round)}
+                                            sx={{
+                                                color: 'white',
+                                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                    transform: 'scale(1.05)'
+                                                },
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            title={`Shuffle ${round === totalRounds ? 'Final' :
+                                                round === totalRounds - 1 ? 'Semi-Finals' :
+                                                    round === totalRounds - 2 ? 'Quarter-Finals' :
+                                                        `Round ${round}`} matchups`}
+                                        >
+                                            <ShuffleIcon />
+                                        </IconButton>
+                                    )}
+                                </Box>
                                 {roundMatches.length > 0 ? (
                                     roundMatches.map(match => (
                                         <Box
