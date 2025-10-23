@@ -217,8 +217,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                 p: 1,
                 position: 'relative',
                 backgroundColor: 'hsl(0, 0%, 15%)',
-                height: '100%',
-                overflow: 'auto'
+                minHeight: '100vh'
             }}>
                 <Typography variant="h4" sx={{
                     textAlign: 'center',

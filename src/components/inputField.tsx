@@ -249,6 +249,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
                     backgroundColor: "hsl(0, 0%, 10%)",
                     width: '100%',
                     flex: 1,
+                    minHeight: '400px',
                     '& .MuiInputBase-root': {
                         height: '100%',
                         alignItems: 'flex-start',
@@ -256,6 +257,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
                     },
                     '& .MuiInputBase-input': {
                         height: '100%',
+                        minHeight: '380px',
                         alignItems: 'flex-start',
                         paddingTop: '14px',
                         overflow: 'auto',
