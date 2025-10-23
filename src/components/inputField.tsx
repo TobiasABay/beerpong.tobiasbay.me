@@ -21,10 +21,36 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
         return localStorage.getItem('tournament-team-mode') === 'true';
     });
 
+    const shortenLongNames = (text: string, maxLength: number = 30): string => {
+        return text
+            .split('\n')
+            .map(line => {
+                if (line.length <= maxLength) return line;
+
+                // For team names with '/', try to shorten each part
+                if (line.includes(' / ')) {
+                    const [name1, name2] = line.split(' / ');
+                    const maxEach = Math.floor(maxLength / 2) - 2; // Reserve space for ' / '
+
+                    const shortName1 = name1.length > maxEach ?
+                        name1.substring(0, maxEach - 3) + '...' : name1;
+                    const shortName2 = name2.length > maxEach ?
+                        name2.substring(0, maxEach - 3) + '...' : name2;
+
+                    return `${shortName1} / ${shortName2}`;
+                } else {
+                    // For single names, just truncate
+                    return line.substring(0, maxLength - 3) + '...';
+                }
+            })
+            .join('\n');
+    };
+
     const handleInputChange = (value: string) => {
-        setInputText(value);
+        const shortenedValue = shortenLongNames(value);
+        setInputText(shortenedValue);
         // Save to localStorage on every change
-        localStorage.setItem('tournament-players', value);
+        localStorage.setItem('tournament-players', shortenedValue);
     };
 
     const handleTeamModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,7 +202,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
             flexDirection: 'column',
             gap: 2,
             backgroundColor: 'hsl(0, 0%, 15%)',
-            p: 3,
+            p: 1,
             borderRadius: 2,
             border: '1px solid hsl(0, 0%, 25%)',
             boxSizing: 'border-box'
@@ -215,7 +241,19 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
                         alignItems: 'flex-start',
                         paddingTop: '14px',
                         overflow: 'auto',
-                        color: 'white'
+                        color: 'white',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        '&::-webkit-scrollbar': {
+                            width: '6px'
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            background: 'hsl(0, 0%, 20%)'
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            background: 'hsl(0, 0%, 40%)',
+                            borderRadius: '3px'
+                        }
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: 'hsl(0, 0%, 25%)'
@@ -234,14 +272,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
                     : "Enter player names (one per line)..."
                 }
             />
-            <Box sx={{ display: 'flex', gap: 2, alignSelf: 'flex-start' }}>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit}
-                    sx={{ flex: 1 }}
-                >
-                    Create Bracket
-                </Button>
+            <Box sx={{ display: 'flex', gap: 2, alignSelf: 'center' }}>
                 <Button
                     variant="outlined"
                     onClick={handleShuffle}
@@ -251,6 +282,14 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
                 >
                     Shuffle
                 </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleSubmit}
+                    sx={{ flex: 1 }}
+                >
+                    Create
+                </Button>
+
             </Box>
         </Box>
     )
