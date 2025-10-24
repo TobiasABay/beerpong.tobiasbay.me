@@ -93,7 +93,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                 const lastWinner = winners.pop()!; // Remove the last winner
 
                 // Create matches for the remaining winners (even number)
-                const newMatches = [];
+                const newMatches: Match[] = [];
                 for (let i = 0; i < winners.length; i += 2) {
                     newMatches.push({
                         id: `round-${nextRound}-match-${Math.floor(i / 2) + 1}`,
@@ -117,7 +117,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
                 setMatches([...all, ...newMatches]);
             } else {
                 // Even number of winners - create normal matches
-                const newMatches = [];
+                const newMatches: Match[] = [];
                 for (let i = 0; i < winners.length; i += 2) {
                     newMatches.push({
                         id: `round-${nextRound}-match-${Math.floor(i / 2) + 1}`,
@@ -152,7 +152,7 @@ export default function TournamentBracket({ players }: TournamentBracketProps) {
         }
 
         // Create new matches with shuffled players
-        const newMatches = [];
+        const newMatches: Match[] = [];
         for (let i = 0; i < shuffledPlayers.length; i += 2) {
             if (i + 1 < shuffledPlayers.length) {
                 newMatches.push({
