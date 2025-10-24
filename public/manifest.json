@@ -1,0 +1,46 @@
+{
+    "name": "Beerpong Tournament",
+    "short_name": "Beerpong",
+    "description": "Interactive beerpong tournament bracket",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a1a",
+    "theme_color": "#8B4513",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/touch-icons/apple-touch-icon-iphone-60x60.png",
+            "sizes": "60x60",
+            "type": "image/png"
+        },
+        {
+            "src": "/touch-icons/apple-touch-icon-ipad-76x76.png",
+            "sizes": "76x76",
+            "type": "image/png"
+        },
+        {
+            "src": "/touch-icons/apple-touch-icon-iphone-retina-120x120.png",
+            "sizes": "120x120",
+            "type": "image/png"
+        },
+        {
+            "src": "/touch-icons/apple-touch-icon-ipad-retina-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "/Beerpong-logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "games",
+        "entertainment",
+        "sports"
+    ],
+    "lang": "en",
+    "scope": "/",
+    "prefer_related_applications": false
+}
