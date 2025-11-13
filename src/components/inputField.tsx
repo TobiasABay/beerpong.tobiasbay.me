@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useQueryState } from 'nuqs';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -11,10 +12,20 @@ interface InputFieldProps {
 }
 
 export default function InputField({ onPlayersChange }: InputFieldProps) {
+    // nuqs automatically handles URL encoding/decoding for:
+    // - Newlines (for multiline player lists)
+    // - Special characters like " / " (for team names)
+    // - Spaces and other URL-unsafe characters
+    const [urlPlayers, setUrlPlayers] = useQueryState('players', {
+        defaultValue: '',
+        clearOnDefault: true,
+    });
+
+    // Initialize from localStorage, URL will override on mount if present
     const [inputText, setInputText] = useState(() => {
-        // Load from localStorage on component mount
         return localStorage.getItem('tournament-players') || '';
     });
+
     const [teamMode, setTeamMode] = useState(() => {
         // Load team mode preference from localStorage
         return localStorage.getItem('tournament-team-mode') === 'true';
@@ -23,6 +34,68 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
         // Load lock teams preference from localStorage
         return localStorage.getItem('tournament-lock-teams') === 'true';
     });
+
+    const hasInitializedFromUrl = useRef(false);
+    const isUpdatingFromUserInput = useRef(false);
+    const lastSyncedValue = useRef<string | null>(null);
+
+    // On mount, load from URL if present (takes priority over localStorage)
+    useEffect(() => {
+        if (!hasInitializedFromUrl.current) {
+            if (urlPlayers && urlPlayers.trim() !== '') {
+                setInputText(urlPlayers);
+                localStorage.setItem('tournament-players', urlPlayers);
+                lastSyncedValue.current = urlPlayers;
+            } else {
+                lastSyncedValue.current = inputText || null;
+            }
+            hasInitializedFromUrl.current = true;
+        }
+    }, [urlPlayers]);
+
+    // Sync inputText with URL when it changes (debounced to avoid too many URL updates)
+    useEffect(() => {
+        if (!hasInitializedFromUrl.current) return; // Skip during initialization
+
+        const timeoutId = setTimeout(() => {
+            if (isUpdatingFromUserInput.current) {
+                if (inputText) {
+                    setUrlPlayers(inputText);
+                    lastSyncedValue.current = inputText;
+                } else {
+                    setUrlPlayers(null);
+                    lastSyncedValue.current = null;
+                }
+                isUpdatingFromUserInput.current = false;
+            }
+        }, 300); // Debounce by 300ms
+
+        return () => clearTimeout(timeoutId);
+    }, [inputText, setUrlPlayers]);
+
+    // Load from URL when it changes (e.g., browser back/forward)
+    // Only update if the change didn't come from our own sync
+    useEffect(() => {
+        if (hasInitializedFromUrl.current && !isUpdatingFromUserInput.current) {
+            // Check if this URL change matches what we last synced (means it's from our sync, ignore it)
+            if (urlPlayers === lastSyncedValue.current) {
+                return;
+            }
+
+            if (urlPlayers === null || urlPlayers.trim() === '') {
+                // If URL is cleared, clear the input too
+                if (inputText !== '') {
+                    setInputText('');
+                    localStorage.removeItem('tournament-players');
+                    lastSyncedValue.current = null;
+                }
+            } else if (urlPlayers !== inputText) {
+                setInputText(urlPlayers);
+                localStorage.setItem('tournament-players', urlPlayers);
+                lastSyncedValue.current = urlPlayers;
+            }
+        }
+    }, [urlPlayers, inputText]);
 
     const shortenLongNames = (text: string, maxLength: number = 30): string => {
         return text
@@ -51,6 +124,7 @@ export default function InputField({ onPlayersChange }: InputFieldProps) {
 
     const handleInputChange = (value: string) => {
         const shortenedValue = shortenLongNames(value);
+        isUpdatingFromUserInput.current = true;
         setInputText(shortenedValue);
         // Save to localStorage on every change
         localStorage.setItem('tournament-players', shortenedValue);
